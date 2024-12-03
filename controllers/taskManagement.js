@@ -47,3 +47,29 @@ export async function updateTask(req,res){
         res.status(500).json({error:'task not found'});
     }
 }
+export async function is_taskComplete(req,res){
+    try{
+        const taskId=req.params.id;
+        const {is_completed}=req.body;
+        
+        const result=await pool.query(`update tasks set is_completed=$1 where id=$2 RETURNING *`,[is_completed,taskId]);
+
+        if(result.rows.length==0){
+            return res.status(404).json({message:'task not found'});
+        }
+        res.json(result.rows[0]);
+    }catch(error){
+        console.error("Error updating task completion:",error);
+        res.status(500).json({error:"Failed to update task completion."});
+    }
+}
+export async function getFilteredTasks(req,res){
+    try{
+        const {title}=req.query;
+        const result=await pool.query(`select * from tasks where LOWER(title) like $1`,[`%${title.toLowerCase()}%`]);
+        res.json(result.rows);
+    }catch(error){
+        console.error("Error searching tasks:", error);
+        res.status(500).json({ error: "Failed to search tasks." });
+    }
+}
